@@ -63,6 +63,7 @@ public class MoveJob extends AbstractCopyJob {
 
         this.errorDialogTitle = Translator.get("move_dialog.error_title");
         this.renameMode = renameMode;
+        System.out.println(files.size() + " move job");
     }
 
 

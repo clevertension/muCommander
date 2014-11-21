@@ -113,7 +113,7 @@ public class CopyJob extends AbstractCopyJob {
         	//we should rename it automatically
         	try {
         		for (int i=1; i< 100; i++) {
-        			String dupName = file.getName() + "_" + i;
+        			String dupName = file.getNameWithoutExtension() + "_" + i + "." + file.getExtension();
         			if (isDestFileExist(destFolder, dupName)) {
         				continue;
         			} else {

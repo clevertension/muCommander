@@ -28,6 +28,8 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.InputEvent;
 
+import javax.swing.JTable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -156,6 +158,7 @@ public class FileDropTargetListener implements DropTargetListener {
      */
     private boolean acceptOrRejectDragEvent(DropTargetDragEvent event) {
         this.currentDropAction = event.getDropAction();
+        
 
         this.dragAccepted = event.isDataFlavorSupported(TransferableFileSet.getFileSetDataFlavor())
                 || event.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
@@ -188,8 +191,11 @@ public class FileDropTargetListener implements DropTargetListener {
 
         LOGGER.trace("dragAccepted="+dragAccepted+" dropAction="+currentDropAction);
 
+        this.dragAccepted = this.canDragInSameFolder(event);
+        
         if(dragAccepted) {
             // Accept the drag event with our drop action
+        	System.out.println("can drag and drop");
             event.acceptDrag(currentDropAction);
         }
         else {
@@ -232,7 +238,23 @@ public class FileDropTargetListener implements DropTargetListener {
         folderPanel.setCursor(Cursor.getDefaultCursor());
     }
 
+    private boolean canDragInSameFolder(DropTargetDragEvent event) {
+        FolderPanel dragInitiator = DnDContext.getDragInitiator();
+        int row = dragInitiator.getFileTable().rowAtPoint(event.getLocation());
+        AbstractFile destFile = dragInitiator.getFileTable().getFileTableModel().getFileAtRow(row);
+        if((destFile != null && !destFile.isDirectory()) || destFile.equalsCanonical(folderPanel.getCurrentFolder())) {
+        	return false;
+        }
+        dragInitiator.getFileTable().selectFile(destFile);
+        return true;
+    }
 
+    private AbstractFile getDestFolder(DropTargetDropEvent event) {
+        FolderPanel dragInitiator = DnDContext.getDragInitiator();
+        int row = dragInitiator.getFileTable().rowAtPoint(event.getLocation());
+        return dragInitiator.getFileTable().getFileTableModel().getFileAtRow(row);
+    }
+    
     public void drop(DropTargetDropEvent event) {
         // Restore default cursor, no matter what
         folderPanel.setCursor(Cursor.getDefaultCursor());
@@ -280,7 +302,7 @@ public class FileDropTargetListener implements DropTargetListener {
         // Normal mode: copy or move dropped files to the FolderPanel's current folder
         else {
             MainFrame mainFrame = folderPanel.getMainFrame();
-            AbstractFile destFolder = folderPanel.getCurrentFolder();
+            AbstractFile destFolder = getDestFolder(event);
             if(currentDropAction==DnDConstants.ACTION_MOVE) {
                 // Start moving files
                 ProgressDialog progressDialog = new ProgressDialog(mainFrame, Translator.get("move_dialog.moving"));
