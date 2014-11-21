@@ -19,6 +19,11 @@
 
 package com.mucommander.ui.dialog.file;
 
+import java.io.File;
+
+import ch.qos.logback.core.FileAppender;
+
+import com.mucommander.commons.file.AbstractFile;
 import com.mucommander.commons.file.util.FileSet;
 import com.mucommander.commons.file.util.PathUtils;
 import com.mucommander.job.TransferFileJob;
@@ -58,8 +63,21 @@ public class UnpackDialog extends TransferDestinationDialog {
 
     @Override
     protected PathFieldContent computeInitialPath(FileSet files) {
+    	String genPath = mainFrame.getActivePanel().getCurrentFolder().getAbsolutePath(true);
+    	try {
+	    	if (files.size() == 1) {
+	    		AbstractFile curFile = files.get(0);
+	    		int zipFileLength = curFile.ls().length;
+	    		if (zipFileLength > 1) {
+	    			File f = new File(genPath, curFile.getNameWithoutExtension().replaceAll(" ", "_"));
+	    			genPath = f.getAbsolutePath();
+	    		}
+	    	}
+    	} catch(Exception e) {
+    		
+    	}
     	//The default unpack path should be current folder
-        return new PathFieldContent(mainFrame.getActivePanel().getCurrentFolder().getAbsolutePath(true));
+        return new PathFieldContent(genPath);
     }
 
     @Override
