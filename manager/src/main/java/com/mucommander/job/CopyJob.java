@@ -74,7 +74,19 @@ public class CopyJob extends AbstractCopyJob {
     }
 
 
-
+    private boolean isDestFileExist(AbstractFile destFolder, String fileName) {
+    	try {
+	    	AbstractFile[] destFiles = destFolder.ls();
+	    	for (AbstractFile file : destFiles) {
+				if (file.getName().equals(fileName)) {
+					return true;
+				}
+			}
+    	} catch (Exception e) {
+    		
+    	}
+    	return false;
+    }
     ////////////////////////////////////
     // TransferFileJob implementation //
     ////////////////////////////////////
@@ -95,6 +107,24 @@ public class CopyJob extends AbstractCopyJob {
 		
         // Destination folder
         AbstractFile destFolder = recurseParams==null?baseDestFolder:(AbstractFile)recurseParams;
+        
+        AbstractFile sourceFolder = file.getParent();
+        if (sourceFolder.equalsCanonical(destFolder) && files.size() == 1) {
+        	//we should rename it automatically
+        	try {
+        		for (int i=1; i< 100; i++) {
+        			String dupName = file.getName() + "_" + i;
+        			if (isDestFileExist(destFolder, dupName)) {
+        				continue;
+        			} else {
+        				newName = dupName;
+        				break;
+        			}
+        		}
+        	} catch(Exception e) {
+        		
+        	}
+        }
 		
         // Is current file in base folder ?
         boolean isFileInBaseFolder = files.indexOf(file)!=-1;
@@ -115,6 +145,8 @@ public class CopyJob extends AbstractCopyJob {
         // Do nothing if file is a symlink (skip file and return)
         if(file.isSymlink())
             return true;
+        
+        
 
         destFile = checkForCollision(file, destFolder, destFile, false);
         if (destFile == null)
